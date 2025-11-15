@@ -1,0 +1,634 @@
+================================================================================
+    ARQUITECTURA VISUAL - APLICACIÓN SAPUI5 FREESTYLE
+================================================================================
+
+================================================================================
+1. ESTRUCTURA DE CAPAS - ARQUITECTURA MVC
+================================================================================
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          UI LAYER (VISTAS XML)                             │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ App.view.xml                                                        │   │
+│  │ ├─ <App id="app">                                                   │   │
+│  │ │  └─ controlAggregation="pages" (Router inyecta vistas aquí)       │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Home.view.xml                                                       │   │
+│  │ ├─ <Page title="{i18n>title}">                                      │   │
+│  │ │  ├─ <VBox>                                                        │   │
+│  │ │  │  ├─ <Text>{i18n>textPruebai18n}</Text>                         │   │
+│  │ │  │  └─ <Button press="onPress">Buscar</Button>                    │   │
+│  │ │  └─ <VBox>                                                        │   │
+│  │ │     └─ <Fragment fragmentName="ProductsTable">                    │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ ProductsTable.fragment.xml                                          │   │
+│  │ ├─ <Table items="{ProductCollection>/}">                            │   │
+│  │ │  ├─ <columns>                                                     │   │
+│  │ │  │  ├─ Product                                                   │   │
+│  │ │  │  ├─ UnitPrice (Currency formatter)                             │   │
+│  │ │  │  ├─ UnitsInStock                                               │   │
+│  │ │  │  └─ QuantityPerUnit                                            │   │
+│  │ │  └─ <items>                                                       │   │
+│  │ │     └─ <ColumnListItem> [for each product]                        │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   ↑
+                         binding a modelos
+                                   │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      CONTROLLER LAYER (CONTROLADORES)                       │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌────────────────────────────┐    ┌────────────────────────────────┐     │
+│  │ App.controller.js          │    │ Home.controller.js             │     │
+│  ├────────────────────────────┤    ├────────────────────────────────┤     │
+│  │ • onInit()                 │    │ • onInit()                     │     │
+│  │   (vacío)                  │    │ • onPress() [async]            │     │
+│  │                            │    │   - setBusy(true)              │     │
+│  │ Responsabilidad:           │    │   - getDataProducts()          │     │
+│  │ Controlador raíz           │    │   - setProductModel()          │     │
+│  │                            │    │   - MessageBox dialogs         │     │
+│  │                            │    │                                │     │
+│  │                            │    │ Responsabilidad:               │     │
+│  │                            │    │ Lógica de presentación         │     │
+│  │                            │    │ Manejo de eventos              │     │
+│  └────────────────────────────┘    └────────────────────────────────┘     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   ↑
+                           delega responsabilidades
+                                   │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                   SERVICE & HELPER LAYER (SERVICIOS)                        │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌────────────────────────────┐    ┌────────────────────────────────┐     │
+│  │ HomeHelper.js              │    │ HomeService.js                 │     │
+│  ├────────────────────────────┤    ├────────────────────────────────┤     │
+│  │ • init(oModel)             │    │ • readProducts(oModel,         │     │
+│  │   Almacena ODataModel      │    │   oFilter) [async Promise]     │     │
+│  │                            │    │   └─ oModel.read('/Products')  │     │
+│  │ • getDataProducts()        │    │      └─ Promisify callback    │     │
+│  │   ├─ Llama HomeService     │    │                                │     │
+│  │   └─ Retorna Promise       │    │ Responsabilidad:               │     │
+│  │                            │    │ Comunicación OData             │     │
+│  │ • setProductModel(ctrl,    │    │ Promesas async                 │     │
+│  │   datos)                   │    │ Abstracción de red             │     │
+│  │   ├─ Crea JSONModel        │    │                                │     │
+│  │   └─ Asigna datos          │    │                                │     │
+│  │                            │    │                                │     │
+│  │ Responsabilidad:           │    │                                │     │
+│  │ Orquestación lógica        │    │                                │     │
+│  │ Gestión de modelos         │    │                                │     │
+│  └────────────────────────────┘    └────────────────────────────────┘     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   ↑
+                          llamadas OData
+                                   │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      MODEL LAYER (MODELOS DE DATOS)                         │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌────────────────────────────┐    ┌────────────────────────────────┐     │
+│  │ ODataModel ("")            │    │ ProductCollection JSONModel    │     │
+│  ├────────────────────────────┤    ├────────────────────────────────┤     │
+│  │ Tipo: ODataModel V2        │    │ Tipo: JSONModel                │     │
+│  │ Origen: manifest.json      │    │ Origen: Creado dinámicamente   │     │
+│  │ Data Source: mainService   │    │ Datos: Array de productos      │     │
+│  │ URI: /northwind/...svc/    │    │ SizeLimit: 1,000,000           │     │
+│  │ Preload: true              │    │                                │     │
+│  │                            │    │ Uso: Binding en tabla          │     │
+│  │ Uso: Backend communication │    │      ProductsTable             │     │
+│  └────────────────────────────┘    └────────────────────────────────┘     │
+│                                                                             │
+│  ┌────────────────────────────┐    ┌────────────────────────────────┐     │
+│  │ Device Model ("device")    │    │ i18n Model ("i18n")            │     │
+│  ├────────────────────────────┤    ├────────────────────────────────┤     │
+│  │ Tipo: JSONModel            │    │ Tipo: ResourceModel            │     │
+│  │ Origen: models.js          │    │ Origen: i18n.properties        │     │
+│  │ Datos: isPhone, isTablet   │    │ Contenido: Textos multiidioma  │     │
+│  │ Binding: OneWay (read-only)│    │ Bundle: .i18n.i18n             │     │
+│  │                            │    │                                │     │
+│  │ Uso: Diseño responsivo     │    │ Uso: Textos dinámicos en UI    │     │
+│  └────────────────────────────┘    └────────────────────────────────┘     │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+                                   ↑
+                        Lee desde backend
+                                   │
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                      DATA SOURCE LAYER (BACKEND)                            │
+├─────────────────────────────────────────────────────────────────────────────┤
+│                                                                             │
+│  ┌─────────────────────────────────────────────────────────────────────┐   │
+│  │ Northwind OData V2 Service                                          │   │
+│  │ https://services.odata.org/northwind/northwind.svc/                │   │
+│  │                                                                     │   │
+│  │ EntitySets Disponibles:                                             │   │
+│  │ • /Products          (ProductID, ProductName, UnitPrice, ...)      │   │
+│  │ • /Categories        (CategoryID, CategoryName, ...)               │   │
+│  │ • /Orders            (OrderID, CustomerID, EmployeeID, ...)        │   │
+│  │ • /Customers         (CustomerID, CompanyName, ...)                │   │
+│  │ • /Employees         (EmployeeID, FirstName, LastName, ...)        │   │
+│  │ • /Suppliers         (SupplierID, CompanyName, ...)                │   │
+│  │ • + más entidades y vistas                                          │   │
+│  └─────────────────────────────────────────────────────────────────────┘   │
+│                                                                             │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+================================================================================
+2. FLUJO DE DATOS - CICLO COMPLETO
+================================================================================
+
+1. INICIALIZACIÓN DE APP
+───────────────────────
+
+    browser
+       ↓
+    index.html (carga UI5)
+       ↓
+    Bootstrap UI5 → sap.ui.core.ComponentSupport
+       ↓
+    Component.js.init()
+    ├─ UIComponent.prototype.init()
+    ├─ createDeviceModel() → registrado como "device"
+    ├─ getRouter().initialize()
+    └─ setInitModel()
+       └─ HomeHelper.init(this.getModel())
+          └─ _oNorthwindModel = ODataModel (default)
+       ↓
+    manifest.json procesa configuración
+    ├─ Carga ODataModel (mainService)
+    ├─ Carga i18n ResourceModel
+    ├─ Configura Routing
+    └─ Carga rootView (App.view.xml)
+       ↓
+    Router navega a route inicial
+    ├─ Patrón: ":?query:" (home)
+    ├─ Target: TargetHome
+    ├─ Carga: Home.view.xml
+    │  ├─ Renderiza Page
+    │  ├─ Renderiza Button "Buscar"
+    │  └─ Incluye ProductsTable.fragment.xml
+    │     └─ Tabla vacía (ProductCollection vacío)
+       ↓
+    APP LISTO para interacción
+
+
+2. FLUJO DE USUARIO - CLIC BOTÓN BUSCAR
+─────────────────────────────────────────
+
+    Usuario hace click
+       ↓
+    Home.view.xml Button→press="onPress"
+       ↓
+    Home.controller.onPress() ejecuta
+    ├─ Obtiene tabla: this.byId("idProductsTable")
+    ├─ setBusy(true) ← Muestra spinner de carga
+    └─ try block:
+       ↓
+    HomeHelper.getDataProducts()
+    ├─ this._oNorthwindModel (OData)
+    └─ HomeService.readProducts(oModel, [])
+       ↓
+    HomeService.readProducts()
+    ├─ new Promise((resolve, reject) => {
+    │    oModel.read('/Products', {
+    │      filters: [],
+    │      success: resolve,
+    │      error: reject
+    │    })
+    │  })
+    └─ Promise.all([...]) ← Retorna [{ results: [...] }]
+       ↓
+    ODataModel ejecuta HTTP
+    ├─ GET /northwind/northwind.svc/Products
+    ├─ Headers, Auth, etc.
+    └─ Response:
+       {
+         "results": [
+           { ProductID: 1, ProductName: "Chai", UnitPrice: "18.00", ... },
+           { ProductID: 2, ProductName: "Chang", UnitPrice: "19.00", ... },
+           ...
+         ]
+       }
+       ↓
+    Promise resuelto con datos
+       ↓
+    HomeHelper.setProductModel(controller, oDatos[0].results)
+    ├─ Obtiene modelo: getModel('ProductCollection')
+    ├─ Si no existe:
+    │  ├─ new JSONModel([])
+    │  ├─ setSizeLimit(1000000)
+    │  └─ setModel(oModel, 'ProductCollection')
+    │
+    └─ oListModel.setData(oDatos)
+       ├─ Asigna datos al modelo
+       └─ Dispara evento de cambio (binding update)
+       ↓
+    Home.view.xml binding actualizado
+    ├─ items="{ProductCollection>/}"
+    ├─ Detecta cambio en ProductCollection
+    └─ Actualiza tabla
+       ↓
+    ProductsTable.fragment.xml renderiza
+    ├─ <Table id="idProductsTable">
+    │  ├─ Para cada elemento en ProductCollection:
+    │  │  ├─ Crea <ColumnListItem>
+    │  │  ├─ ProductID y ProductName en ObjectIdentifier
+    │  │  ├─ UnitPrice con formatter Currency
+    │  │  ├─ UnitsInStock como texto
+    │  │  └─ QuantityPerUnit como texto
+    │  │
+    └─ Tabla ahora muestra N filas con datos
+       ↓
+    Home.controller.onPress() continúa
+    ├─ MessageBox.success()
+    │  └─ "Se consultaron los productos exitosamente"
+    │
+    ├─ finally block:
+    │  └─ setBusy(false) ← Oculta spinner
+    │
+    └─ catch block (si error):
+       ├─ MessageBox.error(mensaje i18n)
+       ├─ console.error(error)
+       └─ finally: setBusy(false)
+       ↓
+    APP RENDERIZADA CON DATOS
+
+================================================================================
+3. ESTRUCTURA DE DIRECTORIOS Y DEPENDENCIAS
+================================================================================
+
+webapp/
+│
+├── Component.js
+│   ├─ depends: models.js, HomeHelper.js
+│   ├─ provides: UIComponent.extend()
+│   └─ lifecycle: init → setInitModel
+│
+├── manifest.json (CONFIGURACIÓN CENTRAL)
+│   ├─ dataSources
+│   │  └─ mainService (OData V2 Northwind)
+│   ├─ sap.ui5.models
+│   │  ├─ "" (ODataModel, mainService)
+│   │  └─ "i18n" (ResourceModel)
+│   ├─ sap.ui5.routing
+│   │  ├─ routes[]: RouteHome
+│   │  └─ targets{}: TargetHome
+│   └─ sap.ui5.rootView: App.view.xml
+│
+├── controller/
+│   ├── App.controller.js
+│   │   ├─ extends: sap.ui.core.mvc.Controller
+│   │   └─ namespace: com.bootcamp.sapui5.freestyle.controller.App
+│   │
+│   └── Home.controller.js
+│       ├─ extends: sap.ui.core.mvc.Controller
+│       ├─ depends: HomeHelper, MessageBox
+│       ├─ namespace: com.bootcamp.sapui5.freestyle.controller.Home
+│       └─ methods: onInit(), onPress()
+│
+├── view/
+│   ├── App.view.xml
+│   │   ├─ controllerName: App.controller.js
+│   │   └─ structure: <App id="app"> (routing container)
+│   │
+│   ├── Home.view.xml
+│   │   ├─ controllerName: Home.controller.js
+│   │   ├─ binding: i18n>title, press="onPress"
+│   │   └─ includes: ProductsTable.fragment.xml
+│   │
+│   └── fragments/
+│       └── ProductsTable.fragment.xml
+│           ├─ type: FragmentDefinition
+│           ├─ binding: items="{ProductCollection>/}"
+│           └─ columns: Product, UnitPrice, UnitsInStock, QuantityPerUnit
+│
+├── model/
+│   └── models.js
+│       ├─ depends: JSONModel, Device
+│       └─ exports: createDeviceModel()
+│
+├── utils/
+│   ├── HomeHelper.js
+│   │   ├─ depends: HomeService.js, JSONModel
+│   │   ├─ state: _oNorthwindModel
+│   │   └─ methods: init(), getDataProducts(), setProductModel()
+│   │
+│   └── HomeService.js
+│       ├─ depends: (none, receives ODataModel as param)
+│       └─ methods: readProducts(oModel, oFilter)
+│
+├── localService/
+│   └── mainService/
+│       └── metadata.xml (OData V2 Northwind schema)
+│
+├── i18n/
+│   └── i18n.properties
+│       ├─ appTitle, appDescription
+│       ├─ title, textBuscar
+│       ├─ Product, UnitPrice, UnitsInStock, QuantityPerUnit
+│       └─ errorLoadingProducts, MessageSuccess
+│
+├── css/
+│   └── style.css
+│
+└── test/
+    ├── unit/ (QUnit tests)
+    │   └── controller/Home.controller.js (unit test)
+    │
+    └── integration/ (OPA5 tests)
+        ├── pages/ (page objects)
+        ├── arrangements/ (test setup)
+        └── NavigationJourney.js (test scenarios)
+
+
+================================================================================
+4. MODELOS DE DATOS - VISTA GENERAL
+================================================================================
+
+MODELO 1: ODataModel ("" - default)
+──────────────────────────────────
+  Tipo: sap.ui.model.odata.ODataModel (V2)
+  Origen: manifest.json → dataSource: mainService
+  URI: /northwind/northwind.svc/
+  Preload: true
+  Función: Backend communication
+  Acceso: this.getModel() en cualquier controlador
+  
+  Entidades usadas en app:
+    GET /Products → Array de productos
+      ├─ ProductID (Edm.Int32)
+      ├─ ProductName (Edm.String)
+      ├─ UnitPrice (Edm.Decimal)
+      ├─ UnitsInStock (Edm.Int16)
+      ├─ QuantityPerUnit (Edm.String)
+      └─ (más propiedades en metadata.xml)
+
+MODELO 2: ProductCollection (JSONModel)
+────────────────────────────────────────
+  Tipo: sap.ui.model.json.JSONModel
+  Origen: Creado dinámicamente en HomeHelper.setProductModel()
+  Datos: Array de productos copiados de OData
+  SizeLimit: 1,000,000 registros
+  Función: Binding a tabla de UI
+  Acceso: this.getModel('ProductCollection') en controlador
+  Binding Path: ProductCollection>/ (array binding)
+  
+  Estructura datos:
+    {
+      results: [
+        { ProductID, ProductName, UnitPrice, UnitsInStock, QuantityPerUnit, ... },
+        { ... },
+        ...
+      ]
+    }
+
+MODELO 3: Device Model ("device")
+──────────────────────────────────
+  Tipo: sap.ui.model.json.JSONModel
+  Origen: models.js → createDeviceModel()
+  Datos: sap.ui.Device
+  Binding: OneWay (read-only)
+  Función: Información del dispositivo
+  Acceso: this.getModel('device') en controlador
+  Propiedades: isPhone, isTablet, isDesktop, orientation, ...
+  Uso: Responsive design en vistas
+
+MODELO 4: i18n Model ("i18n")
+──────────────────────────────
+  Tipo: sap.ui.model.resource.ResourceModel
+  Origen: i18n.properties
+  Bundle: com.bootcamp.sapui5.freestyle.i18n.i18n
+  Función: Textos multiidioma
+  Acceso: 
+    - En vistas: {i18n>clave}
+    - En código: this.getModel('i18n').getResourceBundle().getText('clave')
+  Contenido: appTitle, title, textBuscar, Product, etc.
+
+
+================================================================================
+5. ROUTING - CONFIGURACIÓN Y FLUJO
+================================================================================
+
+CONFIGURACIÓN EN manifest.json:
+──────────────────────────────
+
+routing: {
+  config: {
+    routerClass: sap.m.routing.Router
+    controlAggregation: "pages"          ← Agregación donde insertar vistas
+    controlId: "app"                     ← ID de App.view.xml <App id="app">
+    transition: "slide"                  ← Animación entre vistas
+    type: View
+    viewType: XML
+    path: com.bootcamp.sapui5.freestyle.view
+    async: true                          ← Carga asíncrona
+  },
+  
+  routes: [
+    {
+      name: "RouteHome"
+      pattern: ":?query:"                ← Ruta por defecto (home)
+      target: ["TargetHome"]
+    }
+  ],
+  
+  targets: {
+    TargetHome: {
+      id: "Home"
+      name: "Home"                       ← Home.view.xml
+    }
+  }
+}
+
+FLUJO ROUTING:
+──────────────
+
+1. Component.js init()
+   └─ this.getRouter().initialize()
+      └─ Lee rutas de manifest
+      └─ Navega a ruta inicial
+
+2. Patrón matching: ":?query:"
+   └─ Coincide con URL actual (ej: app#/)
+   └─ Target: TargetHome
+
+3. Cargar Target: TargetHome
+   ├─ id: "Home"
+   ├─ name: "Home" → Home.view.xml
+   ├─ Carga clase: com.bootcamp.sapui5.freestyle.view.Home
+   └─ Enlaza controlador: Home.controller.js
+
+4. Insertar en App.view.xml
+   ├─ controlId: "app" → <App id="app">
+   ├─ controlAggregation: "pages" → agregarView()
+   └─ Renderiza Home.view.xml
+
+5. Home.view.xml renderizada
+   ├─ Controlador: Home.controller.js
+   ├─ Contenido: Button + ProductsTable.fragment.xml
+   └─ Tabla vacía (ProductCollection sin datos)
+
+NAVEGACIÓN POSTERIOR:
+─────────────────────
+  - navTo(sName, oParameters) → Llamar desde controlador
+  - Ejemplo: this.getOwnerComponent().getRouter().navTo("RouteHome")
+  - En esta app: Solo hay una ruta, sin navegación adicional
+
+
+================================================================================
+6. FLUJO DE EVENTOS - DIAGRAMA SECUENCIAL
+================================================================================
+
+Usuario                App UI           Controller          Helper/Service      OData
+   │                    │                  │                    │              │
+   │  click "Buscar"     │                  │                    │              │
+   ├───────────────────>│ onPress()        │                    │              │
+   │                    ├────────────────>│                    │              │
+   │                    │ setBusy(true)    │                    │              │
+   │                    │                  │                    │              │
+   │                    │ getDataProducts()│                    │              │
+   │                    ├────────────────>│                    │              │
+   │                    │                  │ readProducts()     │              │
+   │                    │                  ├───────────────────>│              │
+   │                    │                  │                    │ read()       │
+   │                    │                  │                    ├─────────────>│
+   │                    │                  │                    │              │ HTTP GET
+   │                    │                  │                    │              │ /Products
+   │                    │                  │                    │              │
+   │                    │                  │                    │              │ 200 OK
+   │                    │                  │                    │<─────────────┤ {results:[...]}
+   │                    │                  │                    │              │
+   │                    │                  │<─────────────────────────────────┤
+   │                    │                  │ Promise[{results}]                │
+   │                    │                  │                    │              │
+   │                    │ setProductModel()│                    │              │
+   │                    ├────────────────>│                    │              │
+   │                    │                  │ Create JSONModel   │              │
+   │                    │                  │ setData(products)  │              │
+   │                    │                  │<───────────────────┤              │
+   │                    │                  │ Model updated      │              │
+   │                    │                  │                    │              │
+   │                    │<─────────────────┤ [Binding Update]                  │
+   │                    │ Render Table     │                    │              │
+   │                    │ with rows        │                    │              │
+   │                    │                  │                    │              │
+   │                    │ MessageBox.success()                  │              │
+   │ "Éxito" message    │<──────────────────                    │              │
+   │<───────────────────┤                  │                    │              │
+   │                    │ setBusy(false)   │                    │              │
+   │                    │<──────────────────                    │              │
+   │                    │                  │                    │              │
+   │ [Tabla visible]    │                  │                    │              │
+   │                    │                  │                    │              │
+
+
+================================================================================
+7. CICLO DE VIDA DEL COMPONENTE
+================================================================================
+
+FASE 1: CREACIÓN
+────────────────
+  Component.js → extend(UIComponent)
+    ├─ metadata: { manifest: "json" }
+    └─ init()
+       ├─ UIComponent.prototype.init()
+       ├─ models.createDeviceModel()
+       │  └─ JSONModel(Device)
+       ├─ setModel(deviceModel, "device")
+       ├─ getRouter().initialize()
+       │  └─ Lee manifest.json
+       │  └─ Configura rutas
+       └─ setInitModel()
+          └─ HomeHelper.init(ODataModel)
+
+FASE 2: MANIFEST PROCESSING
+─────────────────────────────
+  manifest.json procesa:
+    ├─ sap.app: metadata de app
+    ├─ sap.ui5.models
+    │  ├─ ODataModel (mainService)
+    │  │  ├─ dataSource: mainService
+    │  │  ├─ preload: true
+    │  │  └─ load: GET /metadata
+    │  └─ i18n ResourceModel
+    │     └─ load: i18n.properties
+    ├─ sap.ui5.routing: configuración router
+    └─ sap.ui5.rootView: App.view.xml
+
+FASE 3: ROOT VIEW CREATION
+───────────────────────────
+  App.view.xml se crea:
+    ├─ Controlador: App.controller.js
+    ├─ Estructura: <App id="app"> (routing target)
+    ├─ Router inyecta: Home.view.xml
+    └─ Home.view.xml renderizada:
+       ├─ Controlador: Home.controller.js
+       ├─ Button + ProductsTable.fragment.xml
+       └─ Tabla vacía
+
+FASE 4: USUARIO INTERACTÚA
+───────────────────────────
+  Usuario clic en Button:
+    ├─ Home.controller.onPress()
+    ├─ OData request
+    ├─ ProductCollection modelo actualizado
+    └─ Tabla renderizada con datos
+
+CICLO CONTINÚA:
+────────────────
+  - Más clicks = Más requests (sin caché en esta versión)
+  - Errores: catch block → MessageBox.error()
+  - Cleanup: finally block → setBusy(false)
+
+
+================================================================================
+8. DEPENDENCIAS E INYECCIÓN
+================================================================================
+
+sap.ui.define([...], (module1, module2) => {
+  // Los módulos se inyectan aquí
+  return {...}
+})
+
+Component.js:
+  ├─ sap/ui/core/UIComponent
+  ├─ com/bootcamp/sapui5/freestyle/model/models
+  └─ com/bootcamp/sapui5/freestyle/utils/HomeHelper
+
+Home.controller.js:
+  ├─ sap/ui/core/mvc/Controller
+  ├─ com/bootcamp/sapui5/freestyle/utils/HomeHelper
+  └─ sap/m/MessageBox
+
+HomeHelper.js:
+  ├─ com/bootcamp/sapui5/freestyle/utils/HomeService
+  └─ sap/ui/model/json/JSONModel
+
+HomeService.js:
+  └─ (ninguna, recibe ODataModel como parámetro)
+
+models.js:
+  ├─ sap/ui/model/json/JSONModel
+  └─ sap/ui/Device
+
+
+Resolución en runtime:
+  sap.ui.core.UIComponent ← framework (sap.ui.core.lib)
+  JSONModel ← framework (sap.ui.model.lib)
+  MessageBox ← framework (sap.m.lib)
+  Device ← framework (sap.ui.lib)
+  Módulos aplicación ← namespace:
+    com.bootcamp.sapui5.freestyle.* ← webapp/
+
+
+================================================================================
