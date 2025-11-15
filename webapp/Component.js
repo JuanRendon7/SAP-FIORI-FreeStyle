@@ -1,7 +1,8 @@
 sap.ui.define([
     "sap/ui/core/UIComponent",
-    "com/bootcamp/sapui5/freestyle/model/models"
-], (UIComponent, models) => {
+    "com/bootcamp/sapui5/freestyle/model/models",
+    "com/bootcamp/sapui5/freestyle/utils/HomeHelper"
+], (UIComponent, models, HomeHelper) => {
     "use strict";
 
     return UIComponent.extend("com.bootcamp.sapui5.freestyle.Component", {
@@ -21,6 +22,13 @@ sap.ui.define([
 
             // enable routing
             this.getRouter().initialize();
+
+            //
+            this.setInitModel();
+        },
+
+        setInitModel: function () {
+            HomeHelper.init(this.getModel());
         }
     });
 });
