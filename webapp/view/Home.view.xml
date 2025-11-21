@@ -13,11 +13,14 @@
                 id="textPrueba"
                 text="{i18n>textPruebai18n}"
             />
-            <Button
-                id="btnBuscar"
-                text="{i18n>textBuscar}"
-                press="onPress"
-            />
+            <Toolbar id="toolbarID">
+                <Input id="inputID" visible="true" change="onChange"/>
+                <Button
+                    id="btnBuscar"
+                    text="{i18n>textBuscar}"
+                    press="onPress"
+                />
+            </Toolbar>
         </VBox>
         <VBox id="vTest2">
             <c:Fragment

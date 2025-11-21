@@ -1,15 +1,18 @@
 sap.ui.define([
     "sap/ui/core/mvc/Controller",
     "com/bootcamp/sapui5/freestyle/utils/HomeHelper",
+    "sap/ui/model/Filter",
+    "sap/ui/model/FilterOperator",
     "sap/m/MessageBox"
-], (Controller, HomeHelper, MessageBox) => {
+], (Controller, HomeHelper, Filter, FilterOpeator, MessageBox) => {
     "use strict";
 
     return Controller.extend("com.bootcamp.sapui5.freestyle.controller.Home", {
         onInit() {
         },
 
-        onPress: async function () {
+        onPress_old: async function () {
+            this.functionFor(8);
             const oTable = this.byId("idProductsTable");
 
             try {
@@ -23,6 +26,53 @@ sap.ui.define([
             } finally {
                 oTable.setBusy(false);
             }
-        }
+        },
+
+
+        onPress: async function () {
+            let oFilter = [];
+            let sValue = this.byId("inputID").getValue();
+
+            if (sValue){
+                oFilter = new Filter("ProductID", FilterOpeator.EQ, sValue)
+            }
+
+                let oDatos = await HomeHelper.getDataProducts([oFilter]);
+                await HomeHelper.setProductModel(this, oDatos[0].results);
+        },
+
+        functionFor: function (cont) {
+
+            const oProduct = { sID: "P001", sNombre: "Laptop" };
+            console.log(oProduct.sID);
+            oProduct.sID = "SAPeros";
+            console.log(oProduct.sID);
+
+            for (let i = 0; i < cont; i++) {
+                console.log("iteracion número: " + (i + 1));
+            }
+
+            // Ejemplo con let
+            const bAprobado = false;
+            let sEstado = "pendiente"; // Estado inicial 
+            console.log(sEstado);
+            if (bAprobado) {
+                sEstado = "aprobado"; //Cambia completamente
+            } else {
+                sEstado = "rechazado"; // Cambia completamente
+            }
+            console.log(sEstado);
+        },
+        onChange: function (oEvent) {
+           // let oFilter = [];
+            //let oSource = oEvent.getSource();
+            //let oTable = this.getView().byId("idProductsTable")
+            //let OBinding = oTable.getBinding("items");
+
+            //if (oSource.getValue()) {
+            //     oFilter = new Filter("ProductID", FilterOpeator.EQ, oSource.getValue());
+            //}
+            //OBinding.filter(oFilter);
+        },
     });
 });
