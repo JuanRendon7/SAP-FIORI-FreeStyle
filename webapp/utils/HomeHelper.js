@@ -22,6 +22,15 @@ sap.ui.define([
                 oListModel = oController.getOwnerComponent().getModel('ProductCollection');
             }
             oListModel.setData(oDatos);
+        },
+
+        setInitModelLocalData: function (oComponent) {
+            oComponent.setModel(new JSONModel({
+                valueInput: '',
+                selectedKey: ''
+            }), "LocalDataModel");
+
+
         }
 
     };

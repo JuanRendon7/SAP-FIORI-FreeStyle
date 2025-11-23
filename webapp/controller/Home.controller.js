@@ -19,7 +19,7 @@ sap.ui.define([
                 oTable.setBusy(true);
                 let oDatos = await HomeHelper.getDataProducts();
                 await HomeHelper.setProductModel(this, oDatos[0].results);
-                MessageBox.success(this.oResourceBundle = this.getView().getModel("i18n").getResourceBundle().getText("MessageSuccess"));
+                MessageBox.success(this.getView().getModel("i18n").getResourceBundle().getText("MessageSuccess"));
             } catch (error) {
                 MessageBox.error(this.getView().getModel("i18n").getResourceBundle().getText("errorLoadingProducts"));
                 console.error("Error loading products:", error);
@@ -31,14 +31,21 @@ sap.ui.define([
 
         onPress: async function () {
             let oFilter = [];
-            let sValue = this.byId("inputID").getValue();
+            //let sValue = this.byId("inputID").getValue();
+            //let sKeyCombo = this.byId("comboboxID").getSelectedKey();
 
-            if (sValue){
-                oFilter = new Filter("ProductID", FilterOpeator.EQ, sValue)
+            const oDataLocalModel = this.getOwnerComponent().getModel("LocalDataModel").getData();
+
+            if (oDataLocalModel.valueInput) {
+                oFilter.push(new Filter("ProductID", FilterOpeator.EQ, oDataLocalModel.valueInput));
+            }
+             
+            if (oDataLocalModel.selectedKey) {
+                oFilter.push(new Filter("CategoryID", FilterOpeator.EQ, oDataLocalModel.selectedKey));
             }
 
-                let oDatos = await HomeHelper.getDataProducts([oFilter]);
-                await HomeHelper.setProductModel(this, oDatos[0].results);
+            let oDatos = await HomeHelper.getDataProducts(oFilter);
+            await HomeHelper.setProductModel(this, oDatos[0].results);
         },
 
         functionFor: function (cont) {
@@ -64,7 +71,7 @@ sap.ui.define([
             console.log(sEstado);
         },
         onChange: function (oEvent) {
-           // let oFilter = [];
+            // let oFilter = [];
             //let oSource = oEvent.getSource();
             //let oTable = this.getView().byId("idProductsTable")
             //let OBinding = oTable.getBinding("items");
@@ -74,5 +81,28 @@ sap.ui.define([
             //}
             //OBinding.filter(oFilter);
         },
+
+        onSelectionChange: async function (oEvent) {
+            const oResourceBundle = this.getView().getModel("i18n").getResourceBundle();
+            let oFilter = [];
+            const oComboBox = oEvent.getSource(),
+                oTable = this.getView().byId("idProductsTable"),
+                oBindingItems = oTable.getBinding("items");
+
+                if(!oBindingItems){
+                     MessageBox.error(oResourceBundle.getText("NoData"));
+                     return;
+                }
+
+            const sKeyCombo = oComboBox.getSelectedKey();
+
+            if (sKeyCombo) {
+                oFilter = new Filter("CategoryID", FilterOpeator.EQ, sKeyCombo);
+            }
+
+            oBindingItems.filter(oFilter);
+        }
+
+
     });
 });

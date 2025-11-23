@@ -1,7 +1,8 @@
 <mvc:View
+    xmlns:odata="sap.ui.comp.odata"
     controllerName="com.bootcamp.sapui5.freestyle.controller.Home"
     xmlns:mvc="sap.ui.core.mvc"
-    xmlns:c="sap.ui.core"
+    xmlns:core="sap.ui.core"
     xmlns="sap.m"
 >
     <Page
@@ -14,7 +15,28 @@
                 text="{i18n>textPruebai18n}"
             />
             <Toolbar id="toolbarID">
-                <Input id="inputID" visible="true" change="onChange"/>
+                <Input
+                    id="inputID"
+                    visible="true"
+                    change="onChange"
+                    value="{LocalDataModel>/valueInput}"
+                />
+
+                <ComboBox
+                    id="comboboxID"
+                    selectionChange="onSelectionChange"
+                    selectedKey="{LocalDataModel>/selectedKey}"
+                    items="{
+                        path: '/Categories',
+                        sorter: { path: 'CategoryName' }
+
+                }"
+                >
+                    <core:Item
+                        key="{CategoryID}"
+                        text="{CategoryID}-{CategoryName}"
+                    />
+                </ComboBox>
                 <Button
                     id="btnBuscar"
                     text="{i18n>textBuscar}"
@@ -23,7 +45,7 @@
             </Toolbar>
         </VBox>
         <VBox id="vTest2">
-            <c:Fragment
+            <core:Fragment
                 fragmentName="com.bootcamp.sapui5.freestyle.view.fragments.ProductsTable"
                 type="XML"
             />

@@ -29,6 +29,8 @@ sap.ui.define([
 
         setInitModel: function () {
             HomeHelper.init(this.getModel());
+            HomeHelper.setInitModelLocalData(this);
+
         }
     });
 });

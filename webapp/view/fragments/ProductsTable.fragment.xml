@@ -32,6 +32,14 @@
                 <Text
                     id="ID_T02"
                     text="{i18n>QuantityPerUnit}"
+
+                />
+            </Column>
+            <Column>
+                <Text
+                    
+                    text="{i18n>Category}"
+                    
                 />
             </Column>
         </columns>
@@ -63,6 +71,9 @@
                         id="ID_08"
                         text="{ProductCollection>QuantityPerUnit}"
                     />
+                   <Text
+                        text="{ProductCollection>CategoryID}" 
+                        />
                 </cells>
             </ColumnListItem>
         </items>
