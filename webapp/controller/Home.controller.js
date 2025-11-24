@@ -3,12 +3,16 @@ sap.ui.define([
     "com/bootcamp/sapui5/freestyle/utils/HomeHelper",
     "sap/ui/model/Filter",
     "sap/ui/model/FilterOperator",
-    "sap/m/MessageBox"
-], (Controller, HomeHelper, Filter, FilterOpeator, MessageBox) => {
+    "sap/m/MessageBox",
+    "com/bootcamp/sapui5/freestyle/model/formatter"
+], (Controller, HomeHelper, Filter, FilterOpeator, MessageBox, formatter) => {
     "use strict";
 
     return Controller.extend("com.bootcamp.sapui5.freestyle.controller.Home", {
+        Formatter: formatter,
+
         onInit() {
+            this.oRouter = this.getOwnerComponent().getRouter();
         },
 
         onPress_old: async function () {
@@ -101,6 +105,15 @@ sap.ui.define([
             }
 
             oBindingItems.filter(oFilter);
+        },
+        
+        onItemPress: function (oEvent) {
+            let oSource = oEvent.getSource(); 
+            let oDatos = oSource.getBindingContext("ProductCollection").getObject();
+            
+            this.oRouter.navTo("detail", { 
+                ProductID: oDatos.ProductID 
+            });
         }
 
 

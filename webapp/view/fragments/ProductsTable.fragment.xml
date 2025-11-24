@@ -45,8 +45,7 @@
         </columns>
         <items>
             <ColumnListItem
-                id="ID_06"
-                vAlign="Middle"
+                id="ID_06" type="Active" press="onItemPress"
             >
                 <cells>
                     <ObjectIdentifier
@@ -61,6 +60,7 @@
                                 type: 'sap.ui.model.type.Currency',
                                 formatOptions: {showMeasure: true}
                                 }"
+                                state="{ path: 'ProductCollection>UnitPrice', formatter: '.Formatter.getStateUnit'}"
                         unit="USD"
                     />
                     <Text
