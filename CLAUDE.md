@@ -48,12 +48,20 @@ webapp/
 ├── manifest.json             # App descriptor (configuration, routing, models, data sources)
 ├── controller/               # MVC Controllers
 │   ├── App.controller.js
-│   └── Home.controller.js
+│   ├── Home.controller.js
+│   └── Detail.controller.js
 ├── view/                     # XML Views
 │   ├── App.view.xml         # Root view
-│   └── Home.view.xml        # Home page
+│   ├── Home.view.xml        # Home page (master list)
+│   ├── Detail.view.xml      # Detail page
+│   └── fragments/           # Reusable XML fragments
+│       └── ProductsTable.fragment.xml
 ├── model/
-│   └── models.js            # Model factory (creates device model)
+│   ├── models.js            # Model factory (creates device model)
+│   └── formatter.js         # Formatting functions for data display
+├── utils/                   # Business logic layer
+│   ├── HomeHelper.js        # Helper for data processing and model management
+│   └── HomeService.js       # Service layer for OData calls
 ├── i18n/                    # Internationalization texts
 ├── css/                     # Custom styles
 ├── localService/            # Mock OData metadata and data
@@ -71,10 +79,13 @@ webapp/
 - Router class: `sap.m.routing.Router`
 - Routes defined in `manifest.json` under `sap.ui5.routing`
 - Default route: `RouteHome` with pattern `:?query:` targeting `TargetHome`
+- Detail route: `detail` with pattern `detail/{ProductID}` for master-detail navigation
 - Root view: `App.view.xml` contains the routing container
 
 **Models:**
 - **OData Model** (unnamed/"" model): Bound to Northwind OData V2 service, configured in manifest
+- **ProductCollection Model:** JSON model for product list data, created dynamically in HomeHelper
+- **LocalDataModel:** JSON model for filter values (valueInput, selectedKey), initialized in Component.js
 - **i18n Model:** Resource bundle for internationalization
 - **Device Model:** Created in `Component.js` via `models.createDeviceModel()` for responsive behavior
 
@@ -82,6 +93,13 @@ webapp/
 - OData V2 service configured as `mainService` data source
 - Metadata location: `webapp/localService/mainService/metadata.xml`
 - Model preloaded on app initialization
+- Detail view uses element binding with expand: `path: "/Products({ProductID})", expand: "Order_Details"`
+
+**Service/Helper Pattern:**
+- **HomeService.js**: Low-level OData read operations using Promise wrappers around model.read()
+- **HomeHelper.js**: Business logic layer that orchestrates service calls, manages JSON models, and processes data
+- **Component.js**: Calls `HomeHelper.setInitModel()` on init to set up LocalDataModel with initial filter state
+- Controllers delegate data operations to helpers rather than calling OData directly
 
 ### UI5 Configuration Files
 
@@ -126,6 +144,7 @@ sap.ui.define([
 2. Add corresponding target in `sap.ui5.routing.targets`
 3. Create view in `webapp/view/`
 4. Create controller in `webapp/controller/`
+5. Attach route pattern matched event in controller's onInit: `oRouter.getRoute("routeName").attachPatternMatched(handler, this)`
 
 ### Mock Data Development
 - Metadata: `webapp/localService/mainService/metadata.xml`
@@ -155,10 +174,30 @@ The app uses Multi-Target Application (MTA) deployment model:
 - Tests navigation journeys and user interactions
 - Journey structure: Arrangements, Actions, Assertions
 
+## Implementation Patterns
+
+### Data Flow
+1. **User Action** → Controller event handler (e.g., `onPress`, `onSelectionChange`)
+2. **Controller** → Calls helper method (e.g., `HomeHelper.getDataProducts()`)
+3. **Helper** → Calls service method (e.g., `HomeService.readProducts()`)
+4. **Service** → Wraps OData model.read() in Promise
+5. **Helper** → Processes results and updates JSON model via `setProductModel()`
+6. **View** → Updates automatically via data binding
+
+### Filtering
+- **Client-side filtering**: Applies filters to table binding using `oBinding.filter(oFilter)`
+- **Server-side filtering**: Passes filters to `HomeService.readProducts()` for OData query
+- Current implementation uses both approaches in different scenarios
+
+### Navigation
+- Master list in Home view displays products in ProductsTable fragment
+- Item press triggers `onItemPress` handler which calls `router.navTo("detail", {ProductID: ...})`
+- Detail controller binds element on route matched using `getView().bindElement()`
+
 ## Important Notes
 
 - This is a **V2 template** using OData V2
 - Application uses **JavaScript** (not TypeScript)
 - No ESLint configuration included by default
 - Uses sap_horizon theme (SAP's latest design language)
-- Flex-enabled for UI adaptation and variant management
+- Flex-enabled setting is currently disabled (flexEnabled: false in manifest.json)

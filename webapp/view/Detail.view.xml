@@ -2,9 +2,87 @@
     controllerName="com.bootcamp.sapui5.freestyle.controller.Detail"
     xmlns:mvc="sap.ui.core.mvc"
     xmlns="sap.m"
+    xmlns:f="sap.ui.layout.form"
+    xmlns:smartTable="sap.ui.comp.smarttable"
 >
     <Page
         id="pageDetail"
         title="{i18n>titleDetail}"
-    />
+    >
+        <VBox id="dhb_01">
+            <f:SimpleForm
+                id="SimpleFormDisplay354"
+                editable="false"
+                layout="ResponsiveGridLayout"
+                title="{i18n>Information}"
+                labelSpanXL="3"
+                labelSpanL="3"
+                labelSpanM="3"
+                labelSpanS="12"
+                adjustLabelSpan="false"
+                emptySpanXL="4"
+                emptySpanL="4"
+                emptySpanM="4"
+                emptySpanS="0"
+                columnsXL="1"
+                columnsL="1"
+                columnsM="1"
+                singleContainerFullSize="false"
+            >
+                <f:content>
+                    <Label
+                        id="ld_01"
+                        text="{i18n>ProductName}"
+                    />
+                    <Text
+                        id="nameText"
+                        text="{ProductName}"
+                    />
+                    <Label
+                        id="ld_02"
+                        text="{i18n>QuantityPerUnit}"
+                    />
+                    <Text
+                        id="td_01"
+                        text="{Street} {QuantityPerUnit}"
+                    />
+                    <Label
+                        id="ld_03"
+                        text="{i18n>UnitPrice}"
+                    />
+                    <Text
+                        id="td_02"
+                        text="{UnitPrice}"
+                    />
+                    <Label
+                        id="ld_04"
+                        text="{i18n>UnitsInStock}"
+                    />
+                    <Text
+                        id="countryText"
+                        text="{UnitsInStock}"
+                    />
+                </f:content>
+            </f:SimpleForm>
+            <smartTable:SmartTable
+                id="ST_ORDER_D"
+                entitySet="Order_Details"
+                tableBindingPath="Order_Details"
+                initiallyVisibleFields="OrderID,ProductID,UnitPrice,Quantity,Discount"
+                tableType="ResponsiveTable"
+                enableExport="true"
+                useVariantManagement="false"
+                useTablePersonalisation="true"
+                header="{i18n>headerOrderDetails}"
+                showRowCount="true"
+                showFullScreenButton="true"
+                enableAutoBinding="true"
+                class="sapUiResponsiveContentPadding"
+                enableAutoColumnWidth="true"
+                editTogglable="false"
+            >
+                <smartTable:customToolbar />
+            </smartTable:SmartTable>
+        </VBox>
+    </Page>
 </mvc:View>
